@@ -12,7 +12,7 @@ ups.o:	ups.cpp ups.h
 	$(CC) -c $(CFLAGS) ups.cpp -o ups.o
 
 install:	all
-	cp $(BINS) /usr/local/bin
+	cp $(BINS) $(DESTDIR)/usr/local/bin
 
 clean:
 	rm -f $(BINS) *.o *~ cscope.out
