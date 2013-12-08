@@ -1,0 +1,9 @@
+Package: upsagent
+Section: misc
+Priority: extra
+Maintainer: Andrew
+Architecture: i386
+Version: 1.0.0
+Description: upsagent
+  1.0.0 creates package
+
