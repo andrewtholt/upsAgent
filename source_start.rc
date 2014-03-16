@@ -7,13 +7,12 @@
 #
 ^set GET_FORMAT $K
 ^set STDERR /dev/tty
-^set START_FILE ./source_start.rc
+^set STDOUT /dev/tty
 ^set USER source
 ^set ADD_CR true
 ^set SET_FORMAT $K $V
 ^set CLIENT raw
 ^set DEFAULT_GROUP global
-^set STDOUT /dev/tty
 ^set DEBUG false
 ^set SAVE_ALLOWED true
 ^set SPREAD_SERVER 4803
