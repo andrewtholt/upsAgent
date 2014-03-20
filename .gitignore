@@ -16,8 +16,10 @@
 *.exe
 *.out
 *.app
-
+# Misc
 html
 latex
 upsAgent
 upsagent_1.0.0_i386.deb
+.kdev4
+upsAgent.kdev4
