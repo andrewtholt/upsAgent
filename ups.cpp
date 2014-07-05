@@ -143,6 +143,7 @@ void ups::dump() {
     printf("Line Frequency : %4d\n", lineFrequency);
     printf("Line   Voltage : %4d\n", lineVoltage);
     printf("Output Voltage : %4d\n", outputVoltage);
+    printf("Output Load    : %4d %%\n", outputLoad);
     printf("Battery Charge : %4d\n", battCharge);
     printf("Run Time       : %4d Minutes.\n", runTime);
 
