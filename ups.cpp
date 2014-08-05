@@ -14,6 +14,8 @@ using namespace std;
 ups::ups() {
     port=4001;
     hostname=strsave((char *)"localhost");
+
+    outputFormat = TOSPREAD ;
     
 //    onPowerDelay=2*60 ;
     onPowerDelay=15*60 ;
@@ -22,14 +24,15 @@ ups::ups() {
     cycleCount=0;
     
     lowBatt = false;
-    onBatt = false;
-    onLine = true;
+    onBatt  = false;
+    onLine  = true;
     battCharge=0;     // %
     runTime=0;        // two hours
     lineFrequency=0;
     maxLoad=390; // Watts
     outputLoad=100; // %
     debug=true;
+    loopFlag=true;
     
     alertChars[0] = '!';
     alertChars[1] = '$';
@@ -101,7 +104,6 @@ bool ups::readFromUps() {
     } else {
         status=false;
     }
-
     
     n=ioctl(sfd,FIONREAD,&bytesAvailable);
     
@@ -122,6 +124,22 @@ char *ups::strsave(char *s) {
     return(p);
 }
 
+int ups::getOutputFormat() {
+    return(outputFormat);
+}
+
+void ups::setOutputFormat(int f) {
+    outputFormat = f;
+}
+
+bool ups::getLoop() {
+    return((bool)loopFlag);
+}
+
+void ups::setLoop(bool l) {
+    loopFlag =(bool)l;
+}
+
 bool ups::onLineState() {
     return((bool)onLine);
 }
@@ -135,6 +153,13 @@ bool ups::lowBattState() {
 }
 
 void ups::dump() {
+    printf("Loop           : ");
+    if(loopFlag) {
+        printf("true\n");
+    } else {
+        printf("false\n");
+    }
+
     printf("Cycle Count    : %d\n", cycleCount);
     printf("Debug Flag     : %d\n", debug);
     printf("Host           : %s\n", hostname);
@@ -399,4 +424,18 @@ void ups::clrDebug() {
 
 bool ups::getDebug() {
     return(debug);
+}
+
+int ups::getCycleTime() {
+    time_t cycleTime,t, n;
+
+    t=time(NULL);
+    if(onLineState()) {
+        cycleTime = (time_t)getOnPowerDelay();
+    } else {
+        cycleTime = (time_t)getOnBattDelay();
+    }
+    n = cycleTime - abs(t % (long)cycleTime) ;
+
+    return n;
 }

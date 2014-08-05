@@ -22,6 +22,69 @@ void error(const char *msg) {
     exit(0);
 }
 
+void toSpread() {
+    time_t t,n;
+    time_t cycleTime;
+
+    t=time(NULL);
+    n = cycleTime - abs(t % (long)cycleTime) ;
+
+        cout << "^set ONBATT "      << boolalpha << aUps->onBattState() << endl;
+        cout << "^set RUNTIME "     << aUps->getRunTime() << endl;
+        cout << "^set LOWBATT "     << boolalpha << aUps->lowBattState() << endl;
+        cout << "^set ONLINE "      << boolalpha << aUps->onLineState() << endl;
+        cout << "^set MINLINEVOLTAGE " << aUps->getMinLineVoltage() << endl;
+        cout << "^set LINEVOLTAGE " << aUps->getLineVoltage() << endl;
+        cout << "^set MAXLINEVOLTAGE " << aUps->getMaxLineVoltage() << endl;
+        cout << "^set BATLEVEL " << aUps->getBatteryLevel() << endl;
+        cout << "^set LOAD " << aUps->getLoad() << endl;
+        cout << "^set NEXTSCAN " << n << endl;
+        cout << "^set NOW " << t << endl;
+        cout << "^set CYCLECOUNT " << aUps->getCycleCount() << endl;
+
+    cout.flush();
+}
+
+void toRedis() {
+    time_t t,n;
+    time_t cycleTime;
+
+    t=time(NULL);
+    n = aUps->getCycleTime();
+
+    cout << "multi" << endl;
+    cout << "set ONBATT "      << boolalpha << aUps->onBattState() << endl;
+    cout << "expire ONBATT "      << n << endl;
+
+    cout << "set RUNTIME "     << aUps->getRunTime() << endl;
+    cout << "expire RUNTIME "   << n << endl;
+
+    cout << "set LOWBATT "     << boolalpha << aUps->lowBattState() << endl;
+    cout << "expire LOWBATT "   << n << endl;
+
+    cout << "set ONLINE "      << boolalpha << aUps->onLineState() << endl;
+    cout << "expire ONLINE "   << n << endl;
+
+    cout << "set MINLINEVOLTAGE " << aUps->getMinLineVoltage() << endl;
+    cout << "expire MINLINEVOLTAGE "   << n << endl;
+
+    cout << "set LINEVOLTAGE " << aUps->getLineVoltage() << endl;
+    cout << "expire LINEVOLTAGE "   << n << endl;
+
+    cout << "set MAXLINEVOLTAGE " << aUps->getMaxLineVoltage() << endl;
+    cout << "expire MAXLINEVOLTAGE "   << n << endl;
+
+    cout << "set BATLEVEL " << aUps->getBatteryLevel() << endl;
+    cout << "expire BATLEVEL "   << n << endl;
+
+    cout << "set LOAD " << aUps->getLoad() << endl;
+    cout << "expire LOAD "   << n << endl;
+
+    cout << "exec" << endl;
+
+    cout.flush();
+}
+
 void handler(int signo) {
     time_t t;
     time_t n;
@@ -48,15 +111,14 @@ void handler(int signo) {
     }
     n = cycleTime - abs(t % (long)cycleTime) ;
 
-    cout << "^set ONBATT "      << boolalpha << aUps->onBattState() << endl;
-    cout << "^set RUNTIME "     << aUps->getRunTime() << endl;
-    cout << "^set LOWBATT "     << boolalpha << aUps->lowBattState() << endl;
-    cout << "^set ONLINE "      << boolalpha << aUps->onLineState() << endl;
-    cout << "^set MINLINEVOLTAGE " << aUps->getMinLineVoltage() << endl;
-    cout << "^set LINEVOLTAGE " << aUps->getLineVoltage() << endl;
-    cout << "^set MAXLINEVOLTAGE " << aUps->getMaxLineVoltage() << endl;
-    cout << "^set BATLEVEL " << aUps->getBatteryLevel() << endl;
-    cout << "^set LOAD " << aUps->getLoad() << endl;
+    switch( aUps->getOutputFormat() ) {
+        case TOSPREAD:
+            toSpread();
+            break;
+        case TOREDIS:
+            toRedis();
+            break;
+    }
 
 
     if(aUps->getDebug()) {
@@ -65,12 +127,9 @@ void handler(int signo) {
         fprintf(stderr,"Cycle Time %ld\n",cycleTime);
     }
 
-    cout << "^set NEXTSCAN " << n << endl;
-    cout << "^set NOW " << t << endl;
-    cout << "^set CYCLECOUNT " << aUps->getCycleCount() << endl;
-    cout.flush();
-
-    alarm(n);
+    if ( aUps->getLoop()) {
+        alarm(n);
+    }
 }
 
 void usage() {
@@ -97,7 +156,7 @@ int main(int argc, char *argv[]) {
 
     aUps=new ups();
 
-    while((opt=getopt(argc,argv,"b:dhn:p:")) != -1) {
+    while((opt=getopt(argc,argv,"b:dhn:p:xsr")) != -1) {
         switch(opt) {
             case 'd':
                 debug=1;
@@ -111,6 +170,15 @@ int main(int argc, char *argv[]) {
             case 'p':
                 aUps->setPort(atoi(optarg));
                 break;
+            case 'x':
+                aUps->setLoop(false);
+                break;
+            case 's':
+                aUps->setOutputFormat( TOSPREAD );
+                break;
+            case 'r':
+                aUps->setOutputFormat( TOREDIS );
+                break;
         }
     }
 
@@ -123,7 +191,6 @@ int main(int argc, char *argv[]) {
     
     aUps->mkConnect();
 
-
     if(signal(SIGALRM, handler) == SIG_ERR) {
         printf("Can't catch signal\n");
         exit(1);
@@ -131,14 +198,17 @@ int main(int argc, char *argv[]) {
 
     alarm(1);
 
-    while (1) {
+    if( aUps->getLoop() == false) {
+        handler(11);
+    }
+    while ( aUps->getLoop()) {
+        if(aUps->getDebug()) {
+            aUps->dump();
+        }
+
         if (aUps->readFromUps()) {
             printf("VALID\n\t");
             alarm(1);
-        }
-
-        if(aUps->getDebug()) {
-            aUps->dump();
         }
 
     }

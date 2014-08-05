@@ -1,4 +1,7 @@
 #include <string>
+#define TOSPREAD 1
+#define TOREDIS 2
+
 using namespace std;
 
 class ups {
@@ -12,6 +15,7 @@ class ups {
     bool onBatt;
     bool onLine;
     bool lowBatt;
+
     unsigned char battCharge;
     unsigned char runTime;
     int lineFrequency;
@@ -26,6 +30,9 @@ class ups {
     //
     // Stuff
     //
+    int outputFormat;
+    bool loopFlag;
+    // 
     int cycleCount;
     char *strsave(char *);
     char buffer[255];
@@ -90,5 +97,12 @@ class ups {
         void setDebug();        
         void clrDebug();        
         bool getDebug();        
+
+        bool getLoop();
+        void setLoop(bool );
+
+        int getOutputFormat();
+        void setOutputFormat(int );
+        int getCycleTime();
 };
 
